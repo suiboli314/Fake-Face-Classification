@@ -55,7 +55,8 @@ def Model_checkpoint(path, metrics, model, monitor='val_loss', verbose=False, fi
 
 def CSV_log(path, score, filename='csv_log'):
     header = ['epoch', 'accuracy', 'loss', 'val_accuracy', 'val_loss', 'LR']
-    scores = [score['epoch'] + 1, score['acc'], score['loss'], score['val_acc'], score['val_loss'], score['LR']]
+    scores = [score['epoch'] + 1, score['accuracy'], score['loss'],
+              score['val_accuracy'], score['val_loss'], score['LR']]
     file_exists = os.path.exists(os.path.join(path, filename + '.csv'))
     with open(os.path.join(path, filename + ".csv"), 'a') as csv_file:
         write = csv.writer(csv_file)

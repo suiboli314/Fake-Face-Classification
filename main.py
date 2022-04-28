@@ -8,7 +8,7 @@ from models import load_model
 from datasets.dataset_torch import Dataset
 from utils.hp import load_hps
 from utils.plotting import plot
-from utils.callback import Model_checkpoint
+from utils.callback import CSV_log, Model_checkpoint
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -55,23 +55,29 @@ def valid(ds_valid, model, criterion, device):
     return model, total_loss_valid, total_acc_valid.item()
 
 
-def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device, epochs):
+def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device, epochs, save_dir="./save/", model_id="newModel000"):
     train_losses = []
     valid_losses = []
     train_accs = []
     valid_accs = []
     history = {}
+
+    name_model = 'best_{}.pth'.format(model_id)
+    name_csv = 'log_{}.csv'.format(model_id)
+
     for epoch in range(epochs):
         since = time.time()
         print('\nEpoch {}/{}'.format(epoch + 1, epochs))
         print('-' * 10)
         # training
-        model, total_loss_train, total_acc_train = train(ds_train, model, criterion, optimizer, device)
+        model, total_loss_train, total_acc_train = train(
+            ds_train, model, criterion, optimizer, device)
         train_losses.append(total_loss_train)
         train_accs.append(total_acc_train)
         # validation
         with torch.no_grad():
-            model, total_loss_valid, total_acc_valid = valid(ds_valid, model, criterion, device)
+            model, total_loss_valid, total_acc_valid = valid(
+                ds_valid, model, criterion, device)
             valid_losses.append(total_loss_valid)
             valid_accs.append(total_acc_valid)
 
@@ -80,20 +86,26 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
                    'val_acc': valid_accs}
 
         # save checkpoint
-        Model_checkpoint(path='./', metrics=metrics, model=model,
+        Model_checkpoint(path=save_dir, metrics=metrics, model=model,
                          monitor='val_acc', verbose=True,
-                         file_name="best.pth")
+                         file_name=name_model)
         # printout
-        history = {'epoch': epochs, 'accuracy': train_accs, 'loss': train_losses, 'val_accuracy': valid_accs,
+        history = {'epoch': epoch, 'accuracy': train_accs, 'loss': train_losses, 'val_accuracy': valid_accs,
                    'val_loss': valid_losses, 'LR': optimizer.param_groups[0]['lr']}
         time_elapsed = time.time() - since
-        print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+        print('Training complete in {:.0f}m {:.0f}s'.format(
+            time_elapsed // 60, time_elapsed % 60))
         print("Epoch:", epoch + 1, "- Train Loss:", total_loss_train, "- Train Accuracy:", total_acc_train,
               "- Validation Loss:", total_loss_valid, "- Validation Accuracy:", total_acc_valid)
+        # save log
+        CSV_log(path=save_dir, score=history, filename=name_csv)
+
     return model, history
 
 
 @click.command()
+@click.option('--save_dir', 'save_dir',                 help='direcory to save the result', type=str, default="./save/", required=True)
+@click.option('--model_id', 'model_id',                 help='id of saved model', type=str, default="newModel000", required=True)
 @click.option('--dataset_dir', 'dataset_dir',           help='dataset directory', type=str, default="./Fake-Face-Classification/fake_real-faces/", required=True)
 @click.option('--model_name', 'model_name',             help='model type, e.g. regnet', type=str, default="regnet", required=True)
 @click.option('--n_epochs', 'n_epochs',                 help='number of epoch', type=int, default=50, required=True)
@@ -104,6 +116,8 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
 @click.option('--img_size', 'img_size',                 help='size of image in dataset', type=int, default=299, required=True)
 # @click.option('--framework', 'framework', help='machine learning framework', required=True)
 def train_torch(dataset_dir: str,
+                model_id: str,
+                save_dir: str,
                 model_name: str,
                 n_epochs: int,
                 batch_size: int,
@@ -112,13 +126,13 @@ def train_torch(dataset_dir: str,
                 lr_reducer_patience: int,
                 img_size: int):
 
-    hps = load_hps(dataset_dir=dataset_dir, 
-                   model_name=model_name, 
-                   n_epochs=n_epochs, 
+    hps = load_hps(dataset_dir=dataset_dir,
+                   model_name=model_name,
+                   n_epochs=n_epochs,
                    batch_size=batch_size,
                    learning_rate=learning_rate,
                    lr_reducer_factor=lr_reducer_factor,
-                   lr_reducer_patience=lr_reducer_patience, 
+                   lr_reducer_patience=lr_reducer_patience,
                    img_size=img_size)
 
     model = load_model(model_name=hps['model_name'])
@@ -131,12 +145,12 @@ def train_torch(dataset_dir: str,
     model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = AdaBelief(model.parameters(), lr=hps['learning_rate'])
-    reduce_on_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+    reduce_on_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                    factor=hps['lr_reducer_factor'],
                                                                    patience=hps['lr_reducer_patience'],
                                                                    verbose=True)
     model, history = training(model, train_loader, val_loader, criterion, optimizer,
-                                reduce_on_plateau, device, hps['n_epochs'])
+                              reduce_on_plateau, device, hps['n_epochs'], save_dir=save_dir, model_id=model_id)
     plot(history)
 
 

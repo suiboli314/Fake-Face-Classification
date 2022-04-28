@@ -2,17 +2,17 @@
 This module contains preprocessing and augmentation modules
 """
 import torch
-from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
 from torchvision.transforms import transforms
 from .preparing_datasets import PreparingDatasets
+from os.path import join
 
 
 class Dataset:
     @staticmethod
-    def pytorch_preprocess(dataset_dir="./fake_real-faces/", img_size=224, batch_size=16, augment=True, split_size=0.3):
+    def pytorch_preprocess(dataset_dir, img_size=224, batch_size=16, augment=True, split_size=0.3):
         preparing_datasets = PreparingDatasets(in_dir=dataset_dir, 
-                                               out_dir='./data_splitting/', 
+                                               out_dir=join(dataset_dir,'./../data_splitting/'),
                                                framework='pytorch')
         preparing_datasets.preparing_datasets(split_size=split_size)
 
@@ -34,9 +34,9 @@ class Dataset:
         if not augment:
             train_transforms = test_transforms
 
-        train_data = datasets.ImageFolder(dataset_dir + '/train', transform=train_transforms)
-        val_data = datasets.ImageFolder(dataset_dir + '/val', transform=test_transforms)
-        test_data = datasets.ImageFolder(dataset_dir + '/test', transform=test_transforms)
+        train_data = datasets.ImageFolder(join(dataset_dir, 'train/'), transform=train_transforms)
+        val_data = datasets.ImageFolder(join(dataset_dir, 'val/'), transform=test_transforms)
+        test_data = datasets.ImageFolder(join(dataset_dir, 'test/'), transform=test_transforms)
 
         train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size)

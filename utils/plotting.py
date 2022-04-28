@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 
 
 def plot(history):
+    plt.figure()
     plt.plot(history['accuracy'])
     plt.plot(history['val_accuracy'])
     plt.title('model accuracy')

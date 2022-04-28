@@ -1,10 +1,8 @@
-from torch import nn
-import pandas as pd
 import numpy as np
-import torch
-from sklearn import metrics
-from torch import nn
 import matplotlib.pyplot as plt
+import torch
+from torch import nn
+from sklearn import metrics
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
