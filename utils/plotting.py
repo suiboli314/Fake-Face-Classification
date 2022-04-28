@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
+from os.path import join
 
-
-def plot(history):
+def plot(history, path, name):
     plt.figure()
     plt.plot(history['accuracy'])
     plt.plot(history['val_accuracy'])
@@ -18,3 +18,4 @@ def plot(history):
     plt.xlabel('epochs')
     plt.legend(['train', 'val'], loc='upper left')
     plt.show()
+    plt.savefig(join(path, name+".png"))

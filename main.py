@@ -63,7 +63,7 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
     history = {}
 
     name_model = 'best_{}.pth'.format(model_id)
-    name_csv = 'log_{}.csv'.format(model_id)
+    name_csv = 'log_{}'.format(model_id)
 
     for epoch in range(epochs):
         since = time.time()
@@ -151,7 +151,7 @@ def train_torch(dataset_dir: str,
                                                                    verbose=True)
     model, history = training(model, train_loader, val_loader, criterion, optimizer,
                               reduce_on_plateau, device, hps['n_epochs'], save_dir=save_dir, model_id=model_id)
-    plot(history)
+    plot(history, path=save_dir, name=model_id)
 
 
 if __name__ == '__main__':
