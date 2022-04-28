@@ -1,13 +1,14 @@
 import time
-from torch import nn
-from models import load_model
-from utils.hp import load_hps
-from datasets.dataset_torch import Dataset
-from utils.plotting import plot
-import torch
-from utils.callback import Model_checkpoint
-from adabelief_pytorch import AdaBelief
 import click
+import torch
+from torch import nn
+from adabelief_pytorch import AdaBelief
+
+from models import load_model
+from datasets.dataset_torch import Dataset
+from utils.hp import load_hps
+from utils.plotting import plot
+from utils.callback import Model_checkpoint
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
