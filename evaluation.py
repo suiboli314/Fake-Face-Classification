@@ -11,8 +11,8 @@ from torchvision.transforms import transforms
 
 from models import load_model
 
-device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-
+# device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+device='cpu'
 
 @click.command()
 @click.option('--save_dir', 'save_dir',                 help='direcory to save the result', type=str, default="./save/", required=True)
