@@ -36,7 +36,7 @@ def test(save_dir, model_id, dataset_dir, model_name, img_size, batch_size):
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
     test_data = datasets.ImageFolder(
-        join(dataset_dir, '/test'), transform=test_transforms)
+        join(dataset_dir, 'test'), transform=test_transforms)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
 
     # criterion
