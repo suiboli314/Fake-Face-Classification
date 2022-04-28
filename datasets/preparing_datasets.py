@@ -43,12 +43,12 @@ class PreparingDatasets:
                 os.makedirs(os.path.join(self.in_dir,  "train/fake"))
                 os.makedirs(os.path.join(self.in_dir,  "val/real"))
                 os.makedirs(os.path.join(self.in_dir,  "val/fake"))
-                os.makedirs(os.path.join(self.in_dir,  "test/real"))
-                os.makedirs(os.path.join(self.in_dir,  "test/fake"))
                 os.makedirs(os.path.join(self.out_dir, "fake/train"))
                 os.makedirs(os.path.join(self.out_dir, "fake/val"))
                 os.makedirs(os.path.join(self.out_dir, "real/train"))
                 os.makedirs(os.path.join(self.out_dir, "real/val"))
+                # os.makedirs(os.path.join(self.in_dir,  "test/real"))
+                # os.makedirs(os.path.join(self.in_dir,  "test/fake"))
             except:
                 pass
         else:
