@@ -1,3 +1,5 @@
+import click
+from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -9,21 +11,39 @@ from torchvision.transforms import transforms
 
 from models import load_model
 
-model_path = './best_classification.pth'
-model = load_model("regnet")
-model.load_state_dict(torch.load(model_path))
-model = model.to("cpu")
-test_transforms = transforms.Compose([
-    transforms.Resize((229, 299)),
-    transforms.Grayscale(num_output_channels=3),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
-
-test_data = datasets.ImageFolder('./fake_real-faces' + '/test', transform=test_transforms)
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=8)
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
-def test(test_dataloader, model, criterion, device):
+@click.command()
+@click.option('--save_dir', 'save_dir',                 help='direcory to save the result', type=str, default="./save/", required=True)
+@click.option('--model_id', 'model_id',                 help='id of saved model', type=str, default="newModel000", required=True)
+@click.option('--dataset_dir', 'dataset_dir',           help='dataset directory', type=str, default="./Fake-Face-Classification/fake_real-faces/", required=True)
+@click.option('--model_name', 'model_name',             help='model type, e.g. regnet', type=str, default="regnet", required=True)
+@click.option('--img_size', 'img_size',                 help='size of image in dataset', type=int, default=199, required=True)
+@click.option('--batch_size', 'batch_size',             help='size of each batch', type=int, default=2, required=True)
+def test(save_dir, model_id, dataset_dir, model_name, img_size, batch_size):
+    
+    # load model
+    model = load_model(model_name)
+    model.load_state_dict(torch.load(join(save_dir,'best_{}.pth'.format(model_id))))
+    model = model.to(device)
+
+    # load test dataset
+    test_transforms = transforms.Compose([
+        transforms.Resize((img_size, img_size)),
+        transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+
+    test_data = datasets.ImageFolder(
+        join(dataset_dir, '/test'), transform=test_transforms)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
+
+    # criterion
+    criterion = nn.CrossEntropyLoss()
+
+
+    # test
     model.eval()
     loss_ = 0
     valid_acc = 0
@@ -33,7 +53,7 @@ def test(test_dataloader, model, criterion, device):
     pred_wrong = []
     true_wrong = []
     image = []
-    for x, y_true in test_dataloader:
+    for x, y_true in test_loader:
         X = x.to(device)
         Y = y_true.to(device)
         logit = model(X)
@@ -73,9 +93,5 @@ def performance_matrix(true, pred, model):
     #metrics.plot_confusion_matrix(model, true, pred)
 
 if __name__ == '__main__':
-    batch_size = 2
-    criterion = nn.CrossEntropyLoss()
-    true, pred, image, true_wrong, pred_wrong, total_loss_valid, total_acc_valid, model = test(test_loader, model, criterion,
-                                                                                    "cpu")
+    true, pred, image, true_wrong, pred_wrong, total_loss_valid, total_acc_valid, model = test()
     performance_matrix(true, pred, model)
-

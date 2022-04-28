@@ -10,7 +10,9 @@ def plot(history, path, name):
     plt.xlabel('epochs')
     plt.legend(['train', 'val'], loc='upper left')
     plt.show()
+    plt.savefig(join(path, name+"_accuracy.png"))
 
+    plt.figure()
     plt.plot(history['loss'])
     plt.plot(history['val_loss'])
     plt.title('model loss')
@@ -18,4 +20,4 @@ def plot(history, path, name):
     plt.xlabel('epochs')
     plt.legend(['train', 'val'], loc='upper left')
     plt.show()
-    plt.savefig(join(path, name+".png"))
+    plt.savefig(join(path, name+"_loss.png"))
