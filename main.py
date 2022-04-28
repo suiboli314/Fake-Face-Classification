@@ -78,10 +78,12 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
         scheduler.step(total_loss_valid)
         metrics = {'train_loss': train_losses, 'train_acc': train_accs, 'val_loss': valid_losses,
                    'val_acc': valid_accs}
+
+        # save checkpoint
         Model_checkpoint(path='./', metrics=metrics, model=model,
                          monitor='val_acc', verbose=True,
                          file_name="best.pth")
-
+        # printout
         history = {'epoch': epochs, 'accuracy': train_accs, 'loss': train_losses, 'val_accuracy': valid_accs,
                    'val_loss': valid_losses, 'LR': optimizer.param_groups[0]['lr']}
         time_elapsed = time.time() - since
@@ -123,16 +125,16 @@ def train_torch(dataset_dir: str,
 
     # if hps['framework'] == 'pytorch':
     train_loader, val_loader, test_loader = Dataset.pytorch_preprocess(dataset_dir=hps['dataset_dir'],
-                                                                        img_size=hps['img_size'],
-                                                                        batch_size=hps['batch_size'],
-                                                                        split_size=0.3, augment=True)
+                                                                       img_size=hps['img_size'],
+                                                                       batch_size=hps['batch_size'],
+                                                                       split_size=0.3, augment=True)
     model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = AdaBelief(model.parameters(), lr=hps['learning_rate'])
     reduce_on_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
-                                                                    factor=hps['lr_reducer_factor'],
-                                                                    patience=hps['lr_reducer_patience'],
-                                                                    verbose=True)
+                                                                   factor=hps['lr_reducer_factor'],
+                                                                   patience=hps['lr_reducer_patience'],
+                                                                   verbose=True)
     model, history = training(model, train_loader, val_loader, criterion, optimizer,
                                 reduce_on_plateau, device, hps['n_epochs'])
     plot(history)

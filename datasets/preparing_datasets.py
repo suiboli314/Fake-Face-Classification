@@ -4,8 +4,10 @@ import pandas as pd
 
 
 class PreparingDatasets:
-    def __init__(self, framework):
+    def __init__(self, in_dir, out_dir, framework):
         self.framework = framework
+        self.in_dir = in_dir
+        self.out_dir = out_dir
 
     def transfer_directory_items(self, in_dir, out_dir, transfer_list, mode='cp', remove_out_dir=False):
         print(f'starting to copying/moving from {in_dir} to {out_dir}')
@@ -38,16 +40,16 @@ class PreparingDatasets:
     def create_directory(self):
         if self.framework == 'pytorch':
             try:
-                os.makedirs('./fake_real-faces/train/real')
-                os.makedirs('./fake_real-faces/train/fake')
-                os.makedirs('./fake_real-faces/val/real')
-                os.makedirs('./fake_real-faces/val/fake')
-                os.makedirs('./fake_real-faces/test/real')
-                os.makedirs('./fake_real-faces/test/fake')
-                os.makedirs('./data_splitting/fake/train')
-                os.makedirs('./data_splitting/fake/val')
-                os.makedirs('./data_splitting/real/train')
-                os.makedirs('./data_splitting/real/val')
+                os.makedirs(os.path.join(self.in_dir,  "train/real"))
+                os.makedirs(os.path.join(self.in_dir,  "train/fake"))
+                os.makedirs(os.path.join(self.in_dir,  "val/real"))
+                os.makedirs(os.path.join(self.in_dir,  "val/fake"))
+                os.makedirs(os.path.join(self.in_dir,  "test/real"))
+                os.makedirs(os.path.join(self.in_dir,  "test/fake"))
+                os.makedirs(os.path.join(self.out_dir, "fake/train"))
+                os.makedirs(os.path.join(self.out_dir, "fake/val"))
+                os.makedirs(os.path.join(self.out_dir, "real/train"))
+                os.makedirs(os.path.join(self.out_dir, "real/val"))
             except:
                 pass
         else:
@@ -56,15 +58,15 @@ class PreparingDatasets:
     def preparing_datasets(self, split_size=0.3):
         if self.framework == 'pytorch':
             self.create_directory()
-            self.dir_train_test_split('./fake_real-faces/real/',
-                                      './data_splitting/real/', test_size=split_size)
-            self.dir_train_test_split('./fake_real-faces/fake/',
-                                      './data_splitting/fake/', test_size=split_size)
+            self.dir_train_test_split(os.path.join(self.in_dir,  "real/"),
+                                      os.path.join(self.out_dir, "real/"), test_size=split_size)
+            self.dir_train_test_split(os.path.join(self.in_dir,  "fake/"),
+                                      os.path.join(self.out_dir, "fake/"), test_size=split_size)
 
             # for train data
             # Real
-            train_real = './fake_real-faces/train/real/'
-            source_train = "./data_splitting/real/train"
+            train_real = os.path.join(self.in_dir, "train/real/")
+            source_train = os.path.join(self.out_dir, "real/train/")
             for filename in os.listdir(source_train):
                 try:
                     path = os.path.join(source_train, filename)
@@ -74,8 +76,8 @@ class PreparingDatasets:
                     pass
 
             # Fake
-            train_fake = './fake_real-faces/train/fake/'
-            source_train = "./data_splitting/fake/train"
+            train_fake = os.path.join(self.in_dir, "train/fake/")
+            source_train = os.path.join(self.out_dir, "fake/train/")
             for filename in os.listdir(source_train):
                 try:
                     path = os.path.join(source_train, filename)
@@ -87,8 +89,8 @@ class PreparingDatasets:
 
             # For validation data
             # real
-            val_real = './fake_real-faces/val/real/'
-            source_val = "./data_splitting/real/val"
+            val_real = os.path.join(self.in_dir, "val/real/")
+            source_val = os.path.join(self.out_dir, "real/val/")
             for filename in os.listdir(source_val):
                 try:
                     path = os.path.join(source_val, filename)
@@ -98,8 +100,8 @@ class PreparingDatasets:
                     pass
 
             # fake
-            val_fake = './fake_real-faces/val/fake/'
-            source_val = "./data_splitting/fake/val"
+            val_fake = os.path.join(self.in_dir, "val/fake/")
+            source_val = os.path.join(self.out_dir, "fake/val/")
             for filename in os.listdir(source_val):
                 try:
                     path = os.path.join(source_val, filename)
