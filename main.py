@@ -7,6 +7,7 @@ from utils.plotting import plot
 import torch
 from utils.callback import Model_checkpoint
 from adabelief_pytorch import AdaBelief
+import click
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -63,9 +64,11 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
         since = time.time()
         print('\nEpoch {}/{}'.format(epoch + 1, epochs))
         print('-' * 10)
+        # training
         model, total_loss_train, total_acc_train = train(ds_train, model, criterion, optimizer, device)
         train_losses.append(total_loss_train)
         train_accs.append(total_acc_train)
+        # validation
         with torch.no_grad():
             model, total_loss_valid, total_acc_valid = valid(ds_valid, model, criterion, device)
             valid_losses.append(total_loss_valid)
@@ -87,27 +90,51 @@ def training(model, ds_train, ds_valid, criterion, optimizer, scheduler, device,
     return model, history
 
 
-def train_torch():
-    hps = load_hps(dataset_dir="./fake_real-faces/", model_name='regnet', n_epochs=50, batch_size=2,
-                   learning_rate=0.001,
-                   lr_reducer_factor=0.2,
-                   lr_reducer_patience=8, img_size=299, framework='pytorch')
+@click.command()
+@click.option('--dataset_dir', 'dataset_dir',           help='dataset directory', type=str, default="./Fake-Face-Classification/fake_real-faces/", required=True)
+@click.option('--model_name', 'model_name',             help='model type, e.g. regnet', type=str, default="regnet", required=True)
+@click.option('--n_epochs', 'n_epochs',                 help='number of epoch', type=int, default=50, required=True)
+@click.option('--batch_size', 'batch_size',             help='size of each batch', type=int, default=2, required=True)
+@click.option('--lr', 'learning_rate',                  help='learning rate', type=float, default=0.001, required=True)
+@click.option('--lr_factor', 'lr_reducer_factor',       help='factor for learning rate reducer', type=float, default=0.2, required=True)
+@click.option('--lr_patience', 'lr_reducer_patience',   help='patience of learning rate reducer', type=int, default=8, required=True)
+@click.option('--img_size', 'img_size',                 help='size of image in dataset', type=int, default=299, required=True)
+# @click.option('--framework', 'framework', help='machine learning framework', required=True)
+def train_torch(dataset_dir: str,
+                model_name: str,
+                n_epochs: int,
+                batch_size: int,
+                learning_rate: float,
+                lr_reducer_factor: float,
+                lr_reducer_patience: int,
+                img_size: int):
+
+    hps = load_hps(dataset_dir=dataset_dir, 
+                   model_name=model_name, 
+                   n_epochs=n_epochs, 
+                   batch_size=batch_size,
+                   learning_rate=learning_rate,
+                   lr_reducer_factor=lr_reducer_factor,
+                   lr_reducer_patience=lr_reducer_patience, 
+                   img_size=img_size)
+
     model = load_model(model_name=hps['model_name'])
 
-    if hps['framework'] == 'pytorch':
-        train_loader, val_loader, test_loader = Dataset.pytorch_preprocess(dataset_dir=hps['dataset_dir'],
-                                                                           img_size=hps['img_size'],
-                                                                           batch_size=hps['batch_size'],
-                                                                           split_size=0.3, augment=True)
-        model.to(device)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = AdaBelief(model.parameters(), lr=hps['learning_rate'])
-        reduce_on_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=hps['lr_reducer_factor'],
-                                                                       patience=hps['lr_reducer_patience'],
-                                                                       verbose=True)
-        model, history = training(model, train_loader, val_loader, criterion, optimizer,
-                                  reduce_on_plateau, device, hps['n_epochs'])
-        plot(history)
+    # if hps['framework'] == 'pytorch':
+    train_loader, val_loader, test_loader = Dataset.pytorch_preprocess(dataset_dir=hps['dataset_dir'],
+                                                                        img_size=hps['img_size'],
+                                                                        batch_size=hps['batch_size'],
+                                                                        split_size=0.3, augment=True)
+    model.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = AdaBelief(model.parameters(), lr=hps['learning_rate'])
+    reduce_on_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+                                                                    factor=hps['lr_reducer_factor'],
+                                                                    patience=hps['lr_reducer_patience'],
+                                                                    verbose=True)
+    model, history = training(model, train_loader, val_loader, criterion, optimizer,
+                                reduce_on_plateau, device, hps['n_epochs'])
+    plot(history)
 
 
 if __name__ == '__main__':
